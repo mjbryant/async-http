@@ -1,0 +1,12 @@
+# pyenv
+.python-version
+
+__pycache__
+
+# vim
+*.sw[op]
+
+# ctags
+tags
+tags.lock
+tags.temp
