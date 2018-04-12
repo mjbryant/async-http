@@ -1,6 +1,7 @@
 # pyenv
 .python-version
 
+*.egg-info
 __pycache__
 
 # vim
