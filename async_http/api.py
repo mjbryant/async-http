@@ -15,9 +15,9 @@ from urllib.parse import urlparse
 
 import aiodns
 
-from http_utils import make_http_request_string
-from protocol import Future
-from protocol import Protocol
+from async_http.http_utils import make_http_request_string
+from async_http.protocol import Future
+from async_http.protocol import Protocol
 
 
 _LOOP = None
@@ -49,7 +49,7 @@ def init():
     _AIO_INITIALIZED = True
 
 
-async def resolve_dns(hostname):
+async def _resolve_dns(hostname):
     return await aiodns.DNSResolver(loop=_LOOP).gethostbyname(
         hostname,
         socket.AF_INET,
@@ -63,7 +63,7 @@ async def _make_request_async(host, port, http_content):
     try:
         ip = ipaddress.ip_address(host)
     except ValueError:
-        dns_result = await resolve_dns(host)
+        dns_result = await _resolve_dns(host)
         host = dns_result.addresses[0]
 
     _, protocol = await _LOOP.create_connection(
@@ -122,24 +122,30 @@ def _request(method, url, headers, body):
 
 
 def get(url, headers={}, body={}):
+    init()
     return Future(_request('GET', url, headers, body))
 
 
 def put(url, headers={}, body={}):
+    init()
     return Future(_request('PUT', url, headers, body))
 
 
 def post(url, headers={}, body={}):
+    init()
     return Future(_request('POST', url, headers, body))
 
 
 def delete(url, headers={}, body={}):
+    init()
     return Future(_request('DELETE', url, headers, body))
 
 
 def head(url, headers={}, body={}):
+    init()
     return Future(_request('HEAD', url, headers, body))
 
 
 def options(url, headers={}, body={}):
+    init()
     return Future(_request('OPTIONS', url, headers, body))
