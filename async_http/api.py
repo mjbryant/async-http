@@ -121,31 +121,31 @@ def _request(method, url, headers, body):
     )
 
 
-def get(url, headers={}, body={}):
+def get(url, headers={}, body=None):
     init()
     return Future(_request('GET', url, headers, body))
 
 
-def put(url, headers={}, body={}):
+def put(url, headers={}, body=None):
     init()
     return Future(_request('PUT', url, headers, body))
 
 
-def post(url, headers={}, body={}):
+def post(url, headers={}, body=None):
     init()
     return Future(_request('POST', url, headers, body))
 
 
-def delete(url, headers={}, body={}):
+def delete(url, headers={}, body=None):
     init()
     return Future(_request('DELETE', url, headers, body))
 
 
-def head(url, headers={}, body={}):
+def head(url, headers={}, body=None):
     init()
     return Future(_request('HEAD', url, headers, body))
 
 
-def options(url, headers={}, body={}):
+def options(url, headers={}, body=None):
     init()
     return Future(_request('OPTIONS', url, headers, body))
