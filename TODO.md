@@ -8,5 +8,3 @@
 
 # Good code practices
 * Tests
-* Python packaging
-* Module reorganization
