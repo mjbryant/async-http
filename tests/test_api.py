@@ -3,7 +3,6 @@ from unittest import TestCase
 # Incidentally test that 'import *' works
 from async_http import *
 from async_http.http_utils import DEFAULT_USER_AGENT
-from async_http.http_utils import parse_http_response
 from tests.server import run_server_in_thread
 from tests.server import DEFAULT_TEST_HOST
 from tests.server import DEFAULT_TEST_IP
@@ -27,8 +26,7 @@ class TestGet(TestCase):
 
     def test_get(self):
         headers = {'Host': 'abcd', 'User-Agent': 'fakedit'}
-        future = get(DEFAULT_TEST_URL, headers=headers)
-        response = parse_http_response(future.result())
+        response = get(DEFAULT_TEST_URL, headers=headers).result()
 
         self._assert_empty_200(response)
 
@@ -36,17 +34,15 @@ class TestGet(TestCase):
         assert response.headers['X-User-Agent'] == headers['User-Agent']
 
     def test_get_using_ip(self):
-        future = get('http://{}:{}'.format(
+        response = get('http://{}:{}'.format(
             DEFAULT_TEST_IP,
             DEFAULT_TEST_PORT,
-        ))
-        response = parse_http_response(future.result())
+        )).result()
 
         self._assert_empty_200(response)
 
     def test_get_default_headers(self):
-        future = get(DEFAULT_TEST_URL)
-        response = parse_http_response(future.result())
+        response = get(DEFAULT_TEST_URL).result()
 
         self._assert_empty_200(response)
 
@@ -55,8 +51,7 @@ class TestGet(TestCase):
 
     def test_get_with_body(self):
         request_body = 'This is my body'
-        future = get(DEFAULT_TEST_URL, body=request_body)
-        response = parse_http_response(future.result())
+        response = get(DEFAULT_TEST_URL, body=request_body).result()
 
         assert response.status_code == 200
         assert response.json()['body_length'] == len(request_body)

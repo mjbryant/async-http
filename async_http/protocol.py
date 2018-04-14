@@ -1,6 +1,8 @@
 import asyncio
 import time
 
+from async_http.http_utils import parse_http_response
+
 
 class Future:
 
@@ -9,7 +11,7 @@ class Future:
 
     def result(self, timeout=None):
         response = self.coro_future.result(timeout=timeout)
-        return response
+        return parse_http_response(response)
 
 
 class Protocol(asyncio.Protocol):
