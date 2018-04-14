@@ -1,20 +1,23 @@
 from unittest import TestCase
 
+import pytest
+
 # Incidentally test that 'import *' works
 from async_http import *
 from async_http.http_utils import DEFAULT_USER_AGENT
-from tests.server import run_server_in_thread
 from tests.server import DEFAULT_TEST_HOST
 from tests.server import DEFAULT_TEST_IP
 from tests.server import DEFAULT_TEST_PORT
 from tests.server import DEFAULT_TEST_URL
+from tests.server import SLEEP_HEADER
 
 
-class TestGet(TestCase):
+@pytest.mark.usefixtures("run_server")
+class ServerTest(TestCase):
+    pass
 
-    @classmethod
-    def setup_class(cls):
-        run_server_in_thread()
+
+class TestBasicApi(ServerTest):
 
     @staticmethod
     def _assert_empty_200(response):
@@ -55,3 +58,9 @@ class TestGet(TestCase):
 
         assert response.status_code == 200
         assert response.json()['body_length'] == len(request_body)
+
+    def test_timeout(self):
+        sleep_time = 1
+        headers = {SLEEP_HEADER: sleep_time}
+        with pytest.raises(TimeoutError):
+            get(DEFAULT_TEST_URL, headers=headers).result(timeout=sleep_time/2)

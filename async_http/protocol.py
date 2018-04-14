@@ -1,6 +1,8 @@
 import asyncio
 import time
+from concurrent.futures import TimeoutError as _BuiltInTimeoutError
 
+from async_http.errors import TimeoutError
 from async_http.http_utils import parse_http_response
 
 
@@ -10,8 +12,11 @@ class Future:
         self.coro_future = coro_future
 
     def result(self, timeout=None):
-        response = self.coro_future.result(timeout=timeout)
-        return parse_http_response(response)
+        try:
+            response = self.coro_future.result(timeout=timeout)
+            return parse_http_response(response)
+        except _BuiltInTimeoutError:
+            raise TimeoutError()
 
 
 class Protocol(asyncio.Protocol):

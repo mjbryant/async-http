@@ -8,6 +8,7 @@ __all__ = [
     'post',
     'put',
     'init',
+    'TimeoutError',
 ]
 
 
@@ -20,3 +21,4 @@ from async_http.api import (
     put,
 )
 from async_http.api import init
+from async_http.errors import TimeoutError

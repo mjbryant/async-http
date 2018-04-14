@@ -1,9 +1,12 @@
 import json
+import time
 from threading import Thread
 
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 
+
+SLEEP_HEADER = 'X-Sleep-For'
 
 DEFAULT_TEST_PORT = 13807
 DEFAULT_TEST_HOST = 'localhost'
@@ -22,11 +25,19 @@ def _read_request_body(rfile):
     return request_body
 
 
+def _maybe_sleep(headers):
+    sleep_time = headers.get(SLEEP_HEADER)
+    if sleep_time is not None:
+        time.sleep(int(sleep_time))
+
+
 def handle(self):
     """Generic handler for all HTTP methods of the testing HTTP server. Echos
     back all received headers with an 'X-' prefix and adds the length of the
     body received.
     """
+    _maybe_sleep(self.headers)
+
     self.send_response(code=self.headers.get('X-Expected-Code', 200))
 
     for header, value in self.headers.items():
