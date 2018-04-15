@@ -22,11 +22,10 @@ class Future:
 class Protocol(asyncio.Protocol):
     """TCP protocol instance that immediately writes content to the socket."""
 
-    UNSET = -1
-
     def __init__(self, content):
         self._content = content
         self.finished = False
+        # TODO should be BytesIO?
         self.response = b''
         self._transport = None
         self._start_time = time.time()

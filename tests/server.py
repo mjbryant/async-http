@@ -7,6 +7,8 @@ from http.server import HTTPServer
 
 
 SLEEP_HEADER = 'X-Sleep-For'
+CLOSE_CONNECTION_HEADER = 'X-Close-Connection'
+SEND_ERROR_HEADER = 'X-Send-Error'
 
 DEFAULT_TEST_PORT = 13807
 DEFAULT_TEST_HOST = 'localhost'
@@ -38,7 +40,15 @@ def handle(self):
     """
     _maybe_sleep(self.headers)
 
-    self.send_response(code=self.headers.get('X-Expected-Code', 200))
+    if self.headers.get(CLOSE_CONNECTION_HEADER):
+        # Close the connection without returning a response
+        return
+
+    error_code = self.headers.get(SEND_ERROR_HEADER)
+    if error_code is not None:
+        self.send_error(int(error_code))
+
+    self.send_response(200)
 
     for header, value in self.headers.items():
         self.send_header('X-{}'.format(header), value)
