@@ -3,14 +3,10 @@ from http.client import HTTPResponse
 from io import BytesIO
 
 from async_http import __version__
+from async_http.errors import RequestBodyNotBytes
+
 
 DEFAULT_USER_AGENT = 'async-http/{}'.format(__version__)
-
-HTTP_MESSAGE = (
-    '{method} {path} HTTP/1.1\r\n'
-    '{headers}\r\n'
-    '\r\n'
-)
 
 
 class _FakeSocket:
@@ -51,42 +47,79 @@ def parse_http_response(raw_bytes):
     )
 
 
-
-def _add_host(headers_string, headers, host):
-    if not ('host' in headers or 'Host' in headers):
-        if headers_string:
-            headers_string += '\r\nHost: {}'.format(host)
-        else:
-            headers_string += 'Host: {}'.format(host)
-    return headers_string
-
-
-def _add_user_agent(headers_string, headers):
-    if not ('user-agent' in headers or 'User-Agent' in headers):
-        if headers_string:
-            headers_string += '\r\nUser-Agent: {}'.format(DEFAULT_USER_AGENT)
-        else:
-            headers_string += 'User-Agent: {}'.format(DEFAULT_USER_AGENT)
-    return headers_string
+def _add_host(http_message, headers, host):
+    if not (
+        'host' in headers or
+        'Host' in headers or
+        b'host' in headers or
+        b'Host' in headers
+    ):
+        _write_header(http_message, b'Host', host)
 
 
-def _make_header_string(headers, host):
-    # Could use a StringIO for speed here
-    headers_string = '\r\n'.join(
-        '{}: {}'.format(header_name, header_value)
-        for header_name, header_value in headers.items()
-    )
-    headers_string = _add_host(headers_string, headers, host)
-    headers_string = _add_user_agent(headers_string, headers)
-    return headers_string
+def _add_user_agent(http_message, headers):
+    if not (
+        'user-agent' in headers or
+        'User-Agent' in headers or
+        b'user-agent' in headers or
+        b'User-Agent' in headers
+    ):
+        _write_header(http_message, b'User-Agent', DEFAULT_USER_AGENT)
 
 
-def make_http_request_string(method, path, host, headers, body):
-    http_message = HTTP_MESSAGE.format(
-        method=method,
-        path=path,
-        headers=_make_header_string(headers, host),
-    )
-    if body:
-        http_message += body
+def _make_request_line(method, path):
+    http_message = BytesIO()
+    http_message.write(method)
+    http_message.write(b' ')
+    http_message.write(path.encode())
+    http_message.write(b' ')
+    http_message.write(b'HTTP/1.1\r\n')
     return http_message
+
+
+def _encode_value(value):
+    if isinstance(value, bytes):
+        return value
+    elif isinstance(value, (int, float)):
+        return str(value).encode()
+    return value.encode()
+
+
+def _write_header(http_message, header_name, header_value):
+    http_message.write(_encode_value(header_name))
+    http_message.write(b': ')
+    http_message.write(_encode_value(header_value))
+    http_message.write(b'\r\n')
+
+
+def _write_request_headers(http_message, headers, host):
+    for header_name, header_value in headers.items():
+        _write_header(http_message, header_name, header_value)
+    _add_host(http_message, headers, host)
+    _add_user_agent(http_message, headers)
+    http_message.write(b'\r\n')
+
+
+def _write_body(http_message, body):
+    if body is None:
+        return
+    if not isinstance(body, bytes):
+        raise RequestBodyNotBytes
+    http_message.write(body)
+
+
+def make_http_request_bytes(method, path, host, headers, body):
+    """Construct a valid HTTP request from parameters. Not meant to be called
+    outside of this library.
+
+    :param bytes method: e.g. b'GET'
+    :param str path:
+    :param str host:
+    :param dict headers:
+    :param bytes body:
+    :returns bytes: bytes of complete HTTP request
+    """
+    http_message = _make_request_line(method, path)
+    _write_request_headers(http_message, headers, host)
+    _write_body(http_message, body)
+    return http_message.getvalue()

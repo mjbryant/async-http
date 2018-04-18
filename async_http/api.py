@@ -15,7 +15,8 @@ from urllib.parse import urlparse
 
 import aiodns
 
-from async_http.http_utils import make_http_request_string
+from async_http.errors import EventLoopNotInitialized
+from async_http.http_utils import make_http_request_bytes
 from async_http.protocol import Future
 from async_http.protocol import Protocol
 
@@ -24,10 +25,6 @@ _LOOP = None
 _AIO_INITIALIZED = False
 
 _SLEEP_TIME = 0.005
-
-
-class EventLoopNotInitialized(Exception):
-    """Event loop not initialized."""
 
 
 def _start_background_loop(loop):
@@ -111,7 +108,7 @@ def _request(method, url, headers, body):
     return _make_request(
         host=parsed_url.hostname,
         port=_get_port(parsed_url),
-        http_content=make_http_request_string(
+        http_content=make_http_request_bytes(
             method=method,
             path=_get_path(parsed_url),
             host=parsed_url.hostname,
@@ -123,29 +120,29 @@ def _request(method, url, headers, body):
 
 def delete(url, headers={}, body=None):
     init()
-    return Future(_request('DELETE', url, headers, body))
+    return Future(_request(b'DELETE', url, headers, body))
 
 
 def get(url, headers={}, body=None):
     init()
-    return Future(_request('GET', url, headers, body))
+    return Future(_request(b'GET', url, headers, body))
 
 
 def head(url, headers={}, body=None):
     init()
-    return Future(_request('HEAD', url, headers, body))
+    return Future(_request(b'HEAD', url, headers, body))
 
 
 def options(url, headers={}, body=None):
     init()
-    return Future(_request('OPTIONS', url, headers, body))
+    return Future(_request(b'OPTIONS', url, headers, body))
 
 
 def post(url, headers={}, body=None):
     init()
-    return Future(_request('POST', url, headers, body))
+    return Future(_request(b'POST', url, headers, body))
 
 
 def put(url, headers={}, body=None):
     init()
-    return Future(_request('PUT', url, headers, body))
+    return Future(_request(b'PUT', url, headers, body))

@@ -19,6 +19,9 @@ setup(
         'aiodns',
     ],
     extras_require={
-        'test': ['pytest'],
+        'test': [
+            'mock',
+            'pytest',
+        ],
     },
 )

@@ -23,6 +23,11 @@ class Protocol(asyncio.Protocol):
     """TCP protocol instance that immediately writes content to the socket."""
 
     def __init__(self, content):
+        """Called by asyncio's connection utilities. Immediately writes content
+        to socket.
+
+        :param bytes content: content, must be bytes
+        """
         self._content = content
         self.finished = False
         # TODO should be BytesIO?
@@ -32,7 +37,7 @@ class Protocol(asyncio.Protocol):
         self._end_time = None
 
     def connection_made(self, transport):
-        transport.write(self._content.encode())
+        transport.write(self._content)
         # Writing EOF appears to force external servers (e.g. google) to close
         # the connection on their side.
         transport.write_eof()

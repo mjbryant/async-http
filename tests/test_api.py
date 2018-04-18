@@ -1,3 +1,4 @@
+import mock
 from unittest import TestCase
 from http.client import RemoteDisconnected
 
@@ -6,6 +7,8 @@ from aiodns.error import DNSError
 
 # Incidentally test that 'import *' works
 from async_http import *
+from async_http.errors import RequestBodyNotBytes
+from async_http.errors import TimeoutError
 from async_http.http_utils import DEFAULT_USER_AGENT
 from tests.server import CLOSE_CONNECTION_HEADER
 from tests.server import DEFAULT_TEST_HOST
@@ -58,7 +61,7 @@ class TestBasicApi(ServerTest):
         assert response.headers['X-User-Agent'] == DEFAULT_USER_AGENT
 
     def test_get_with_body(self):
-        request_body = 'This is my body'
+        request_body = b'This is my body'
         response = get(DEFAULT_TEST_URL, body=request_body).result()
 
         assert response.status_code == 200
@@ -71,11 +74,31 @@ class TestBasicApi(ServerTest):
         assert response.status_code == 500
         assert 'Internal Server Error' in response.body.decode()
 
-    def test_timeout(self):
-        sleep_time = 1
-        headers = {SLEEP_HEADER: sleep_time}
-        with pytest.raises(TimeoutError):
-            get(DEFAULT_TEST_URL, headers=headers).result(timeout=sleep_time/2)
+    def test_header_encoding(self):
+        # Make sure headers of various values are properly encoded
+        host_header = 'somehost'
+        user_agent_header = b'whatever'
+        int_header = 123
+        float_header = 123.5
+        headers = {
+            b'Host': host_header,
+            'User-Agent': user_agent_header,
+            'X-My-Int': int_header,
+            'X-My-Float': float_header,
+        }
+        response = get(DEFAULT_TEST_URL, headers=headers).result()
+
+        self._assert_empty_200(response)
+
+        response.headers.pop('Server')
+        response.headers.pop('Date')
+        assert response.headers == {
+            'X-Host': host_header,
+            'X-User-Agent': user_agent_header.decode(),
+            'X-X-My-Int': str(int_header),
+            'X-X-My-Float': str(float_header),
+            'Content-Type': 'application/json',
+        }
 
 
 class TestHTTPMethods(ServerTest):
@@ -106,10 +129,21 @@ class TestErrors(ServerTest):
 
     def test_dns_resolution_error(self):
         with pytest.raises(DNSError):
-            get('http://jkldsjkljfkelwjfkljsdklfjksldakjlf').result()
+            with mock.patch('async_http.api._resolve_dns', side_effect=DNSError):
+                get('http://fdjkldsjkljfkelwjfkljsdklfjksldakjlf').result()
 
     def test_server_isnt_running(self):
         with pytest.raises(ConnectionRefusedError):
             # Use an unlikely port. This is a dumb test but it still seems
             # better to have it than to not, to affirm the error API.
             get('http://127.0.0.1:13808').result()
+
+    def test_timeout(self):
+        sleep_time = 1
+        headers = {SLEEP_HEADER: sleep_time}
+        with pytest.raises(TimeoutError):
+            get(DEFAULT_TEST_URL, headers=headers).result(timeout=sleep_time/2)
+
+    def test_request_body_not_bytes(self):
+        with pytest.raises(RequestBodyNotBytes):
+            get(DEFAULT_TEST_URL, body='my body').result()
