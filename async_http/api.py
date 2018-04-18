@@ -18,7 +18,7 @@ import aiodns
 from async_http.errors import EventLoopNotInitialized
 from async_http.http_utils import make_http_request_bytes
 from async_http.protocol import Future
-from async_http.protocol import Protocol
+from async_http.protocol import AsyncHttpProtocol
 
 
 _LOOP = None
@@ -64,7 +64,7 @@ async def _make_request_async(host, port, http_content):
         host = dns_result.addresses[0]
 
     _, protocol = await _LOOP.create_connection(
-        lambda: Protocol(http_content),
+        lambda: AsyncHttpProtocol(http_content),
         host,
         port,
     )

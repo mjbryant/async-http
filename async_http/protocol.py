@@ -19,7 +19,7 @@ class Future:
             raise TimeoutError()
 
 
-class Protocol(asyncio.Protocol):
+class AsyncHttpProtocol(asyncio.Protocol):
     """TCP protocol instance that immediately writes content to the socket."""
 
     def __init__(self, content):
