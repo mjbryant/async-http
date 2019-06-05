@@ -1,0 +1,14 @@
+version: 2
+jobs:
+    build:
+        working_directory: ~/async-http
+        docker:
+            - image: circleci/python:3.6.8
+        steps:
+            - checkout
+            - run:
+                command: |
+                    sudo pip install -r requirements-tests.txt
+                    sudo pip install aiodns
+            - run:
+                command: make test
