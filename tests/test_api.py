@@ -67,6 +67,7 @@ class TestBasicApi(ServerTest):
         assert response.status_code == 200
         assert response.json()['body_length'] == len(request_body)
 
+    @pytest.mark.skip("Doesn't work on CI servers")
     def test_error_code(self):
         headers = {SEND_ERROR_HEADER: 500}
         response = get(DEFAULT_TEST_URL, headers=headers).result()
